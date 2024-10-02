@@ -171,10 +171,47 @@ def BMI():
                     })
                     
             elif gender == "female":
-                pass            
+                # Calculate BMR for females
+                BMR = 10 * actual_weight + 6.25 * height - 5 * age - 161
+                Calories = BMR * float(activity)
+                if purpose == '0':
+                    # Calculate target calories for purpose 0 (maintenance or slight weight gain)
+                    ten_percent = Calories * 0.1
+                    targetCalories = Calories + ten_percent
+                elif purpose == '1':
+                    # Calculate target calories for purpose 1 (weight gain)
+                    seventy_percent = Calories * 0.7
+                    targetCalories = Calories + seventy_percent
+                
+                # Insert the calculated BMR and targetCalories into the database
+                connection = get_db_connection()
+                cursor = connection.cursor()
+                cursor.execute("INSERT INTO bmr (BMR, targetCalories, buisness_ID) VALUES (%s, %s, %s)", [BMR, targetCalories, buisness_id])
+                connection.commit()
+                connection.close()     
+                
+                # Return a success response
+                return jsonify({
+                    "statusDesc": "Success",
+                    "statusCode": {
+                        "code": "SC000"
+                    },
+                    "message": "BMI calculated successfully",
+                    "param": {
+                        "BMR": BMR,
+                        "targetCalories": targetCalories
+                    }
+                })
 
         else:
-            pass
+                # If mandatory fields are missing, return an error response
+                return jsonify({
+                    "statusDesc": "Failure",
+                    "statusCode": {
+                        "code": "F005"
+                    },
+                    "message": "Some mandatory fields are missing"
+                }), 400
         
     except Exception as e:
         # Return an error response if an exception occurs
