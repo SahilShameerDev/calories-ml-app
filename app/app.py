@@ -6,6 +6,7 @@ import json
 import mysql.connector
 # Importing random and string modules for generating random business IDs
 import random
+
 import string
 
 # Creating a Flask application instance
@@ -218,6 +219,103 @@ def BMI():
         return jsonify({
             'error': str(e)
         }), 500
+        
+        
+        
+    
+# Route for user login
+@app.route('/login', methods=['POST'])
+def login():
+    try:
+        # Get JSON data from the request
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
+
+        # Check if both email and password are provided
+        if email and password and email != "" and password != "" and email != "NA" and password != "NA":
+            # Get the user details from the database
+            connection = get_db_connection()
+            cursor = connection.cursor(dictionary=True)  # Get results as a dictionary
+            cursor.execute("SELECT * FROM user WHERE Email = %s AND Password = %s", (email, password))
+            user = cursor.fetchone()
+            connection.close()
+
+            if user:
+                # If user exists, return success with user details (excluding password)
+                return jsonify({
+                    "statusDesc": "Success",
+                    "statusCode": {
+                        "code": "SC000"
+                    },
+                    "message": "Login successful",
+                    "param": {
+                        "userEmail": user['Email'],
+                        "fullName": user['Full_Name'],
+                        "businessId": user['Business_ID'],
+                        "status": user['Status']
+                    }
+                })
+            else:
+                # If credentials are invalid, return an error
+                return jsonify({
+                    "statusDesc": "Failure",
+                    "statusCode": {
+                        "code": "F001"
+                    },
+                    "message": "Invalid email or password"
+                }), 401
+        else:
+            # If mandatory fields are missing, return an error response
+            return jsonify({
+                "statusDesc": "Failure",
+                "statusCode": {
+                    "code": "F005"
+                },
+                "message": "Email and password are required"
+            }), 400
+
+    except Exception as e:
+        # Return an error response if an exception occurs
+        return jsonify({
+            'error': str(e)
+        }), 500
+        
+        
+    
+# Route for user logout
+@app.route('/logout', methods=['POST'])
+def logout():
+    try:
+        # Get JSON data from the request
+        data = request.get_json()
+        email = data.get('email')
+
+        # Check if the email is provided and valid
+        if email and email != "" and email != "NA":
+            # Simulate logout by returning a success response
+            return jsonify({
+                "statusDesc": "Success",
+                "statusCode": {
+                    "code": "SC000"
+                },
+                "message": f"User {email} logged out successfully"
+            })
+        else:
+            # If email is missing, return an error response
+            return jsonify({
+                "statusDesc": "Failure",
+                "statusCode": {
+                    "code": "F005"
+                },
+                "message": "Email is required to logout"
+            }), 400
+    except Exception as e:
+        # Return an error response if an exception occurs
+        return jsonify({
+            'error': str(e)
+        }), 500
+
 
 # Run the Flask application on host 0.0.0.0 and port 3000 in debug mode
 if __name__ == '__main__':
